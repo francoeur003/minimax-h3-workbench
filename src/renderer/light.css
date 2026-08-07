@@ -2,13 +2,12 @@
   display: flex;
   gap: 18px;
   margin-bottom: 18px;
-  padding: 17px 20px;
-  border-left: 3px solid #ccff49;
-  background: #171c18;
+  padding: 18px 20px;
+  border-left: 3px solid #ff276f;
+  border-radius: 0 14px 14px 0;
+  background: linear-gradient(90deg, #fff0eb, #fff8f5);
   font-size: 11px;
 }
 
-.light-note span {
-  color: #929b96;
-  line-height: 1.7;
-}
+.light-note strong { color: #181e25; white-space: nowrap; }
+.light-note span { color: #6e7782; line-height: 1.7; }

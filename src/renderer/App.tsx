@@ -3,10 +3,10 @@ import type { ApiResponse, AppSettings, BackendKind, BackendTestResult, Environm
 import { estimateCloudCost } from "../shared/capabilities";
 
 type Page = "ready" | "studio" | "downloads" | "guide" | "connections";
-const pages: Array<{ id: Page; icon: string; label: string }> = [
-  { id: "ready", icon: "◌", label: "就绪检测" }, { id: "studio", icon: "✦", label: "生成工作台" },
-  { id: "downloads", icon: "↗", label: "下载链接" }, { id: "guide", icon: "?", label: "配置指南" },
-  { id: "connections", icon: "⌁", label: "连接设置" }
+const pages: Array<{ id: Page; label: string; eyebrow: string }> = [
+  { id: "ready", label: "就绪检测", eyebrow: "CHECK" }, { id: "studio", label: "生成工作台", eyebrow: "CREATE" },
+  { id: "downloads", label: "下载链接", eyebrow: "LINKS" }, { id: "guide", label: "配置指南", eyebrow: "GUIDE" },
+  { id: "connections", label: "连接设置", eyebrow: "CONNECT" }
 ];
 const initialRequest: GenerationRequest = { mode: "text", backend: "local", prompt: "", duration: 6, ratio: "16:9", resolution: "768P", width: 1280, height: 720, count: 4, baseSeed: Math.floor(Math.random() * 1_000_000) };
 
@@ -34,8 +34,8 @@ export function App() {
   if (!settings) return <div className="splash"><div className="brand-mark">H3</div><p>正在启动工作台…</p></div>;
   return <div className="app-shell">
     <aside className="sidebar"><div className="brand"><div className="brand-mark">H3</div><div><strong>MiniMax H3</strong><span>视频生成工作台</span></div></div>
-      <nav>{pages.map((item) => <button key={item.id} className={page === item.id ? "active" : ""} onClick={() => setPage(item.id)}><i>{item.icon}</i>{item.label}</button>)}</nav>
-      <div className="sidebar-foot"><span className="status-dot" /> 轻量版 0.1.1</div></aside>
+      <nav>{pages.map((item) => <button key={item.id} className={page === item.id ? "active" : ""} onClick={() => setPage(item.id)}><i>{item.eyebrow}</i><span>{item.label}</span></button>)}</nav>
+      <div className="sidebar-foot"><span className="status-dot" /> 轻量版 0.1.2</div></aside>
     <main className="main-area">
       {page === "ready" && <ReadyPage report={report} busy={detecting} onDetect={detect} onNavigate={setPage} />}
       {page === "studio" && <StudioPage settings={settings} tasks={tasks} onError={showError} onNotice={(text) => setNotice({ text })} />}

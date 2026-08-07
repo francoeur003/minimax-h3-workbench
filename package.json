@@ -1,6 +1,6 @@
 {
   "name": "minimax-h3-workbench",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MiniMax H3 一站式配置、下载与视频生成工作台",
   "main": "dist-electron/main/main.js",
   "license": "MIT",
