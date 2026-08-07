@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist-electron/
+release/
+.DS_Store
+*.log
+*.part
+.env
+.env.*
+!.env.example
+coverage/
