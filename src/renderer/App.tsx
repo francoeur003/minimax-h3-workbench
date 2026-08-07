@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { ApiResponse, AppSettings, BackendKind, BackendTestResult, DownloadItem, DownloadProgress, EnvironmentReport, GenerationMode, GenerationRequest, GenerationTask } from "../shared/types";
+import type { ApiResponse, AppSettings, BackendKind, BackendTestResult, EnvironmentReport, GenerationMode, GenerationRequest, GenerationTask, ResourceLink } from "../shared/types";
 import { estimateCloudCost } from "../shared/capabilities";
 
 type Page = "ready" | "studio" | "downloads" | "guide" | "connections";
 const pages: Array<{ id: Page; icon: string; label: string }> = [
   { id: "ready", icon: "◌", label: "就绪检测" }, { id: "studio", icon: "✦", label: "生成工作台" },
-  { id: "downloads", icon: "↓", label: "模型下载" }, { id: "guide", icon: "?", label: "配置指南" },
+  { id: "downloads", icon: "↗", label: "下载链接" }, { id: "guide", icon: "?", label: "配置指南" },
   { id: "connections", icon: "⌁", label: "连接设置" }
 ];
 const initialRequest: GenerationRequest = { mode: "text", backend: "local", prompt: "", duration: 6, ratio: "16:9", resolution: "768P", width: 1280, height: 720, count: 4, baseSeed: Math.floor(Math.random() * 1_000_000) };
@@ -14,19 +14,17 @@ export function App() {
   const [page, setPage] = useState<Page>("ready");
   const [settings, setSettings] = useState<AppSettings>();
   const [report, setReport] = useState<EnvironmentReport>();
-  const [manifest, setManifest] = useState<DownloadItem[]>([]);
-  const [downloads, setDownloads] = useState<DownloadProgress[]>([]);
+  const [resources, setResources] = useState<ResourceLink[]>([]);
   const [tasks, setTasks] = useState<GenerationTask[]>([]);
   const [notice, setNotice] = useState<{ text: string; error?: boolean }>();
   const [detecting, setDetecting] = useState(false);
   const showError = (error: unknown) => setNotice({ text: error instanceof Error ? error.message : String(error || "操作失败"), error: true });
 
   useEffect(() => {
-    Promise.all([window.h3.getSettings(), window.h3.getDownloadManifest(), window.h3.listDownloads(), window.h3.listTasks()])
-      .then(([s, m, d, t]) => { if (s.data) setSettings(s.data); if (m.data) setManifest(m.data); if (d.data) setDownloads(d.data); if (t.data) setTasks(t.data); }).catch(showError);
-    const offDownload = window.h3.onDownloadUpdate((item) => setDownloads((all) => upsert(all, item)));
+    Promise.all([window.h3.getSettings(), window.h3.getResourceLinks(), window.h3.listTasks()])
+      .then(([s, r, t]) => { if (s.data) setSettings(s.data); if (r.data) setResources(r.data); if (t.data) setTasks(t.data); }).catch(showError);
     const offTask = window.h3.onTaskUpdate((item) => setTasks((all) => upsert(all, item)));
-    return () => { offDownload(); offTask(); };
+    return () => { offTask(); };
   }, []);
 
   async function detect() {
@@ -37,11 +35,11 @@ export function App() {
   return <div className="app-shell">
     <aside className="sidebar"><div className="brand"><div className="brand-mark">H3</div><div><strong>MiniMax H3</strong><span>视频生成工作台</span></div></div>
       <nav>{pages.map((item) => <button key={item.id} className={page === item.id ? "active" : ""} onClick={() => setPage(item.id)}><i>{item.icon}</i>{item.label}</button>)}</nav>
-      <div className="sidebar-foot"><span className="status-dot" /> 桌面版 0.1.0</div></aside>
+      <div className="sidebar-foot"><span className="status-dot" /> 轻量版 0.1.1</div></aside>
     <main className="main-area">
       {page === "ready" && <ReadyPage report={report} busy={detecting} onDetect={detect} onNavigate={setPage} />}
       {page === "studio" && <StudioPage settings={settings} tasks={tasks} onError={showError} onNotice={(text) => setNotice({ text })} />}
-      {page === "downloads" && <DownloadsPage settings={settings} setSettings={setSettings} manifest={manifest} progress={downloads} onError={showError} />}
+      {page === "downloads" && <ResourcesPage resources={resources} />}
       {page === "guide" && <GuidePage />}
       {page === "connections" && <ConnectionsPage settings={settings} setSettings={setSettings} onError={showError} onNotice={(text) => setNotice({ text })} />}
     </main>
@@ -60,7 +58,7 @@ function ReadyPage({ report, busy, onDetect, onNavigate }: { report?: Environmen
   return <section className="page ready-page"><header className="hero"><span className="eyebrow">SYSTEM READINESS</span><h1>先判断怎么跑，<br/><em>再开始生成。</em></h1><p>一次检查本机硬件、存储、FFmpeg 和 ComfyUI，给出本地、SSH 或云 API 的明确建议。</p><button className="primary large" onClick={onDetect} disabled={busy}>{busy ? "正在检测…" : "开始配置检测"}</button></header>
     <div className="readiness-grid">{cards.map((card) => <article className="metric-card" key={card.name}><span>{card.name}</span><strong>{card.value}</strong><small>{card.sub}</small></article>)}</div>
     {report && <div className={`verdict grade-${report.grade.toLowerCase()}`}><div className="grade">{report.grade}</div><div><span>推荐路径</span><h2>{report.verdict}</h2><ul>{report.recommendations.map((x) => <li key={x}>{x}</li>)}</ul></div></div>}
-    <div className="quick-actions"><button onClick={() => onNavigate("downloads")}><span>01</span><strong>下载模型</strong><small>断点续传与目录安装</small></button><button onClick={() => onNavigate("connections")}><span>02</span><strong>配置连接</strong><small>本地 / 云 API / SSH</small></button><button onClick={() => onNavigate("studio")}><span>03</span><strong>开始生成</strong><small>四路结果并行管理</small></button></div>
+    <div className="quick-actions"><button onClick={() => onNavigate("downloads")}><span>01</span><strong>获取模型</strong><small>打开官方页面自行下载</small></button><button onClick={() => onNavigate("connections")}><span>02</span><strong>配置连接</strong><small>本地 / 云 API / SSH</small></button><button onClick={() => onNavigate("studio")}><span>03</span><strong>开始生成</strong><small>四路结果并行管理</small></button></div>
   </section>;
 }
 
@@ -88,12 +86,12 @@ function TaskCard({ task, index }: { task?: GenerationTask; index: number }) {
   return <article className={`task-card ${task?.status || "empty"}`}>{media ? <video src={media} controls preload="metadata" /> : <div className="task-placeholder"><span>0{index + 1}</span><i>{task ? statusLabel(task.status) : "等待生成"}</i></div>}<div className="task-meta"><div><strong>{task ? `Seed ${task.seed}` : `结果 ${index + 1}`}</strong><small>{task?.message || "提交后显示生成进度"}</small></div>{task && <em>{task.progress}%</em>}</div>{task && <div className="progress"><i style={{ width: `${task.progress}%` }}/></div>}{task?.outputPath && <button className="text-button" onClick={() => window.h3.showItem(task.outputPath!)}>在文件夹中显示</button>}{canCancel && <button className="cancel-button" onClick={() => window.h3.cancelTask(task.id)}>取消</button>}</article>;
 }
 
-function DownloadsPage({ settings, setSettings, manifest, progress, onError }: { settings: AppSettings; setSettings: (s: AppSettings) => void; manifest: DownloadItem[]; progress: DownloadProgress[]; onError: (e: unknown) => void }) {
-  const [accepted, setAccepted] = useState(false);
-  async function pickPath() { const result = await window.h3.selectDirectory(); if (result.data) { const saved = await window.h3.updateSettings({ comfyPath: result.data }); if (saved.data) setSettings(saved.data); } }
-  async function download(id: string) { const response = await window.h3.startDownload(id, settings.comfyPath, accepted); if (!response.ok) onError(response.message); }
-  return <section className="page"><div className="page-title"><div><span className="eyebrow">INSTALL</span><h1>模型与工作流下载</h1></div></div><div className="path-bar"><div><span>ComfyUI 安装目录</span><strong>{settings.comfyPath || "尚未选择"}</strong></div><button onClick={pickPath}>选择目录</button></div><label className="license-check"><input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)}/><span>我已阅读并同意 <button onClick={() => window.h3.openExternal("https://huggingface.co/Comfy-Org/MiniMax-H3_ComfyUI")}>MiniMax H3 Community License</button>。模型权重不随本软件分发。</span></label>
-    <div className="download-list">{manifest.map((item) => { const state = progress.find((p) => p.id === item.id); const percent = state?.totalBytes ? Math.round(state.downloadedBytes / state.totalBytes * 100) : 0; return <article key={item.id}><div className="download-icon">{item.package === "workflow" ? "JSON" : "H3"}</div><div className="download-info"><span>{item.package === "base" ? "基础模型" : item.package === "reference" ? "参考模型" : "官方工作流"}</span><strong>{item.label}</strong><small>{item.relativePath}</small>{state && state.status !== "idle" && <div className="download-progress"><i style={{width: `${percent}%`}}/><em>{state.status === "completed" ? "完成" : `${percent}%`}</em></div>}</div><button className="secondary" disabled={!accepted || state?.status === "downloading"} onClick={() => download(item.id)}>{state?.status === "completed" ? "重新下载" : state?.status === "downloading" ? "下载中" : "下载"}</button></article>; })}</div><p className="footnote">下载支持断点续传，未完成文件以 .part 保存。超大模型建议保留至少 45 GB 可用空间。</p>
+function ResourcesPage({ resources }: { resources: ResourceLink[] }) {
+  const labels: Record<ResourceLink["category"], string> = { model: "MODEL", comfyui: "APP", workflow: "JSON", docs: "DOCS" };
+  return <section className="page"><div className="page-title"><div><span className="eyebrow">RESOURCES</span><h1>下载链接</h1></div></div>
+    <div className="light-note"><strong>轻量工作台</strong><span>软件不包含模型、ComfyUI 或整合包，也不会代替用户下载大文件。点击下方链接后在官方页面自行选择和下载。</span></div>
+    <div className="download-list">{resources.map((item) => <article key={item.id}><div className="download-icon">{labels[item.category]}</div><div className="download-info"><span>官方外部资源</span><strong>{item.label}</strong><small>{item.description}</small></div><button className="primary" onClick={() => window.h3.openExternal(item.url)}>打开链接 ↗</button></article>)}</div>
+    <p className="footnote">模型许可证、文件版本、体积与下载费用均以对应官方页面为准。</p>
   </section>;
 }
 

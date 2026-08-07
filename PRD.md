@@ -95,9 +95,9 @@ ComfyUI 0.30.0+ 已原生支持 H3，无需安装第三方 H3 节点；官方已
 
 ### 2.5 合规边界
 
-MiniMax H3 权重采用 MiniMax H3 Community License，不是 Apache/MIT。工作台不得直接把权重打进安装包，而应在用户接受许可后，从官方仓库按需下载。
+MiniMax H3 权重采用 MiniMax H3 Community License，不是 Apache/MIT。工作台不得直接分发或下载权重，只提供官方仓库外链，由用户自行阅读许可并下载。
 
-许可证包含地域、商业使用、品牌展示和安全义务。面向全球分发前必须完成法务审核和地域门禁；本地模型下载页需要提供许可原文、确认勾选和版本记录。[许可证原文](https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE)
+许可证包含地域、商业使用、品牌展示和安全义务；外链页必须提示用户在官方页面确认许可。[许可证原文](https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE)
 
 ---
 
@@ -107,7 +107,7 @@ MiniMax H3 权重采用 MiniMax H3 Community License，不是 Apache/MIT。工�
 
 - 新用户从打开工作台到提交首个视频任务不超过 15 分钟，不含模型下载时间。
 - 自动识别本地硬件和软件环境，并给出可信的运行路径建议。
-- 一键把模型下载到正确的 ComfyUI 目录，支持断点续传、校验和失败恢复。
+- 提供模型、ComfyUI 与工作流的官方外链和简明目录说明，不接管下载。
 - 在不暴露 ComfyUI 节点复杂度的前提下覆盖 T2V、首尾帧、I2V、V2V。
 - 本地与远程使用同一套生成界面、任务状态和结果管理逻辑。
 - 任何密钥、SSH 凭据和模型下载许可信息都不进入前端源码或普通日志。
@@ -290,89 +290,26 @@ SSH 不是模型生成协议。SSH/SFTP 只负责远程检测、安装、下载�
 
 ---
 
-## 7.2 内嵌下载与安装
+## 7.2 外部下载链接
 
-### 7.2.1 下载套餐
+工作台必须保持轻量，不内置、不缓存、不代理下载任何模型、ComfyUI 或整合包。
 
-下载页默认提供按需套餐，不提供“下载全部仓库”按钮。
+下载链接页只提供以下官方入口：
 
-| 套餐 | 文件 | 预计权重体积 | 支持模式 |
-|---|---|---:|---|
-| 基础生成包 | FL2VA + 文本编码器 + 2 个 VAE | 约 42.5GB | T2V、首尾帧、I2V |
-| 视频参考扩展包 | Ref2VA | 约 21GB | V2V、参考图/视频/音频 |
-| 完整创作包 | FL2VA + Ref2VA + 文本编码器 + 2 个 VAE | 约 63.5GB | 全部本地模式 |
-
-推荐文件：
-
-- `models/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors`
-- `models/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors`
-- `models/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors`
-- `models/vae/minimax_h3_video_vae_fp16.safetensors`
-- `models/vae/minimax_h3_audio_vae_fp32.safetensors`
-
-来源：[ComfyUI 重打包权重](https://huggingface.co/Comfy-Org/MiniMax-H3)
-
-### 7.2.2 内置下载清单与直链
-
-工作台内置版本化 `download-manifest`，每条记录必须同时包含官方直链、目标目录、文件大小和校验信息。MVP 默认清单：
-
-| 用途 | 官方下载地址 | 自动落盘路径 |
+| 资源 | 官方入口 | 工作台行为 |
 |---|---|---|
-| FL2VA 基础模型 | [下载](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors) | `ComfyUI/models/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors` |
-| Ref2VA 视频参考模型 | [下载](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors) | `ComfyUI/models/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors` |
-| H3 文本编码器 | [下载](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors) | `ComfyUI/models/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors` |
-| Video VAE | [下载](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors) | `ComfyUI/models/vae/minimax_h3_video_vae_fp16.safetensors` |
-| Audio VAE | [下载](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors) | `ComfyUI/models/vae/minimax_h3_audio_vae_fp32.safetensors` |
-| T2V 工作流 | [下载](https://github.com/Comfy-Org/workflow_templates/raw/refs/heads/main/templates/video_minimax_h3_t2v.json) | `workflows/video_minimax_h3_t2v.json` |
-| I2V/首尾帧工作流 | [下载](https://github.com/Comfy-Org/workflow_templates/raw/refs/heads/main/templates/video_minimax_h3_i2v.json) | `workflows/video_minimax_h3_i2v.json` |
-| R2V/V2V 工作流 | [下载](https://github.com/Comfy-Org/workflow_templates/raw/refs/heads/main/templates/video_minimax_h3_r2v.json) | `workflows/video_minimax_h3_r2v.json` |
+| MiniMax H3 模型 | [Hugging Face](https://huggingface.co/Comfy-Org/MiniMax-H3_ComfyUI) | 调用系统浏览器打开 |
+| ComfyUI | [GitHub](https://github.com/comfyanonymous/ComfyUI) | 调用系统浏览器打开 |
+| H3 工作流 | [Workflow Templates](https://github.com/Comfy-Org/workflow_templates/tree/main/templates) | 调用系统浏览器打开 |
+| MiniMax 云 API | [官方文档](https://platform.minimax.io/docs/api-reference/video-generation-v2-create) | 调用系统浏览器打开 |
 
-用户只点击“下载并安装”，工作台负责选择直链、创建目录、断点续传、校验和落盘；普通模式不要求用户复制下载地址或自行选择模型文件夹。
+产品约束：
 
-清单从工作台签名配置读取，但更新时必须保持来源允许名单和版本回滚能力，不能通过远程配置下发任意下载地址。
-
-### 7.2.3 下载交互
-
-每个文件显示：
-
-- 文件名、用途、版本、体积；
-- 官方来源链接；
-- 安装目录；
-- 未下载/下载中/暂停/校验中/已安装/损坏；
-- 下载速度、已下载、剩余时间；
-- 暂停、继续、取消、重试、重新校验。
-
-用户点击“下载并安装”后：
-
-1. 展示许可证与适用地区提示；
-2. 用户勾选确认；
-3. 检查磁盘空间和目录权限；
-4. 只下载选中套餐；
-5. 保存为 `.part` 临时文件；
-6. 支持 HTTP Range 断点续传；
-7. 完成后校验大小与哈希/ETag；
-8. 原子移动到 ComfyUI 正确目录；
-9. 刷新模型清单并运行加载检测。
-
-### 7.2.4 本地与远程下载
-
-- 本地模式：文件直接下载到本地 ComfyUI 模型目录；
-- SSH 模式：优先让远程主机直接下载，避免先下载到本地再上传；
-- 远程无法访问源时：允许本地下载后通过 SFTP 断点上传；
-- 支持用户配置 HTTP/HTTPS 代理；
-- 下载源使用允许名单，不允许前端传任意 Shell 下载命令。
-
-### 7.2.5 ComfyUI 安装与更新
-
-下载页同时支持：
-
-- 检测已有 ComfyUI；
-- 安装官方 ComfyUI；
-- 更新到支持 H3 的版本；
-- 下载官方工作流模板；
-- 更新前创建版本和配置快照；
-- 更新失败时回滚；
-- 不覆盖用户已有 custom nodes、模型和 outputs。
+- 软件安装包中不得包含模型权重、ComfyUI 程序或模型压缩包；
+- 不实现断点续传、校验、自动落盘、目录写入、远程下载或 SFTP 模型上传；
+- 用户在官方页面自行阅读许可证、选择版本、下载和安装；
+- 工作台只负责解释所需文件和推荐目录，不接管文件分发；
+- 外链必须使用 HTTPS，且只能从内置允许列表打开。
 
 ---
 
@@ -388,7 +325,7 @@ SSH 不是模型生成协议。SSH/SFTP 只负责远程检测、安装、下载�
 4. ComfyUI 0.30.0+ 安装与更新；
 5. H3 模型目录说明；
 6. T2V、I2V、首尾帧、Ref2VA 工作流说明；
-7. 下载代理、断点续传和手动导入；
+7. 官方下载入口与手动安装目录；
 8. SSH 租用显卡配置；
 9. MiniMax 云 API Key 和余额配置；
 10. 提示词编写与 `<Picture 1>`、`<Video 1>`、`<Audio 1>` 标签；
@@ -620,7 +557,7 @@ MiniMax 云 API 一次请求只返回一个任务，四宫格应创建 4 个独�
 - 私钥和密码不进入项目文件、前端、日志和导出报告；
 - 远程命令使用白名单模板，不接受网页传入任意命令；
 - 所有文件操作限定在配置的远程根目录；
-- SFTP 下载/上传支持断点续传和哈希校验；
+- 生成结果通过 ComfyUI 接口保存到本地，SSH 不承担模型分发；
 - SSH 中断后自动重连任务查询，但不重复提交生成任务。
 
 ### 7.6.4 ComfyUI 接口
@@ -679,7 +616,7 @@ MiniMax 云 API 一次请求只返回一个任务，四宫格应创建 4 个独�
 → 校验 host key 与认证
 → 远程配置检测
 → 远程安装/选择 ComfyUI
-→ 远程按需下载模型
+→ 用户自行在远端准备模型
 → 建立 SSH 隧道
 → 5 秒预检
 → 生成并通过 SFTP/接口取回结果
@@ -754,12 +691,12 @@ P0 错误必须给出直接动作：修复、重试、切换后端、打开指�
 
 ### 11.1 稳定性
 
-- 下载和上传可断点续传；
+- 生成结果下载失败可安全重试；
 - 应用重启后恢复未完成任务；
 - 单个结果失败不影响另外 3 个；
 - 网络中断不重复计费或重复提交；
 - 所有长任务有 taskId、超时和取消机制；
-- 下载、安装和更新操作有事务式状态和回滚点。
+- 工作台不执行模型、ComfyUI 的下载、安装或更新。
 
 ### 11.2 性能
 
@@ -810,7 +747,7 @@ MVP：
 
 - Linux 本地客户端；
 - 多台 SSH 主机和简单任务路由；
-- 下载镜像和局域网模型缓存；
+- 更多官方资源入口和版本提示；
 - 提示词模板、参数预设；
 - 任务对比、评分、收藏和批量导出；
 - callback_url 代替部分云 API 轮询；
@@ -878,7 +815,7 @@ MVP：
 - 首次配置完成率；
 - 从首次启动到首次成功视频的时间；
 - 环境检测结论与真实预检的一致率；
-- 模型下载成功率和断点恢复成功率；
+- 官方资源链接打开成功率；
 - 本地、SSH、云 API 各自生成成功率；
 - 四子任务全部完成率；
 - 因 OOM、版本、目录错误产生的失败率；
@@ -896,7 +833,7 @@ MVP：
 | ComfyUI/H3 更新速度快 | 工作流和节点不兼容 | 版本清单、能力探测、固定已验证组合、可回滚 |
 | 消费级显卡缺乏官方最低配置 | 检测可能误导 | 四档结论 + 真实 5 秒预检，不做静态保证 |
 | 本地纯 2K 能力不完整 | 用户预期落差 | 界面按后端显示能力，本地默认 768P |
-| 模型体积大 | 下载失败、磁盘不足 | 按需套餐、预检查、断点续传、远程直下 |
+| 模型体积大 | 用户下载和存储困难 | 仅提供官方入口、体积提示和目录说明，不把模型塞入软件 |
 | 四宫格误触发四并发 | OOM 或高额费用 | 四子任务默认排队，展示成本并设置限额 |
 | SSH 端口直接暴露 | 远程服务被滥用 | 127.0.0.1 + SSH 隧道 + host key 校验 |
 | 断线重试造成重复计费 | 成本事故 | 幂等键、taskId 持久化、只恢复查询 |
@@ -914,9 +851,9 @@ MVP：
 5. 工作台安装 ComfyUI，还是只连接已有 ComfyUI；
 6. 云 API 单次费用二次确认阈值和每日限额默认值；
 7. 首发验证的 GPU/内存组合和基准样片；
-8. 是否提供官方源之外的合规下载镜像。
+8. 是否需要把桌面壳迁移到 Tauri，以进一步压缩安装包体积。
 
-在这些决策完成前，默认方案为：**Windows + NVIDIA 优先；本地 ComfyUI、SSH、MiniMax 云 API 同时纳入架构，但云 API 费用功能默认关闭，用户主动配置后启用；本地权重只从官方源按需下载。**
+在这些决策完成前，默认方案为：**Windows + NVIDIA 优先；本地 ComfyUI、SSH、MiniMax 云 API 同时纳入架构；工作台不分发模型，只打开官方外链。**
 
 ---
 

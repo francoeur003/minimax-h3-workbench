@@ -13,9 +13,8 @@ import {
   type IpcMainInvokeEvent
 } from "electron";
 import { AdapterRegistry } from "./backends/adapterRegistry";
-import { DOWNLOAD_MANIFEST } from "../shared/downloadManifest";
+import { RESOURCE_LINKS } from "../shared/resourceLinks";
 import type { ApiResponse, AppSettings, BackendKind, GenerationRequest } from "../shared/types";
-import { DownloadManager } from "./modules/downloadManager";
 import { GenerationOrchestrator } from "./modules/generationOrchestrator";
 import { SettingsStore } from "./modules/settingsStore";
 import { inspectEnvironment } from "./modules/systemInspector";
@@ -37,14 +36,13 @@ app.whenReady().then(async () => {
 
   const settingsStore = new SettingsStore();
   adapters = new AdapterRegistry(settingsStore);
-  const downloadManager = new DownloadManager((progress) => mainWindow?.webContents.send("download:update", progress));
   const orchestrator = new GenerationOrchestrator(
     new TaskStore(),
     adapters,
     (task) => mainWindow?.webContents.send("task:update", task)
   );
   await orchestrator.initialize();
-  registerIpc(settingsStore, adapters, downloadManager, orchestrator);
+  registerIpc(settingsStore, adapters, orchestrator);
   mainWindow = createWindow();
   await loadApp(mainWindow);
 
@@ -101,7 +99,6 @@ async function loadApp(window: BrowserWindow): Promise<void> {
 function registerIpc(
   settingsStore: SettingsStore,
   registry: AdapterRegistry,
-  downloads: DownloadManager,
   orchestrator: GenerationOrchestrator
 ): void {
   handle("settings:get", () => settingsStore.get());
@@ -130,10 +127,7 @@ function registerIpc(
     return result.canceled ? undefined : result.filePaths[0];
   });
   handle("environment:inspect", async () => inspectEnvironment((await settingsStore.get()).localComfyUrl));
-  handle("downloads:manifest", () => DOWNLOAD_MANIFEST);
-  handle("downloads:list", () => downloads.list());
-  handle("downloads:start", (_event, id: string, comfyPath: string, accepted: boolean) => downloads.start(id, comfyPath, accepted));
-  handle("downloads:cancel", (_event, id: string) => { downloads.cancel(id); return true; });
+  handle("resources:list", () => RESOURCE_LINKS);
   handle("backend:test", async (_event, kind: BackendKind) => (await registry.get(kind)).test());
   handle("tasks:list", () => orchestrator.list());
   handle("tasks:submit", (_event, request: GenerationRequest) => orchestrator.submit(request));

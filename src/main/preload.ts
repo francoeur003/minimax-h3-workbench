@@ -11,17 +11,13 @@ const api: WorkbenchApi = {
   selectDirectory: () => invoke("dialog:directory"),
   selectFile: (kind) => invoke("dialog:file", kind),
   inspectEnvironment: () => invoke("environment:inspect"),
-  getDownloadManifest: () => invoke("downloads:manifest"),
-  listDownloads: () => invoke("downloads:list"),
-  startDownload: (itemId, comfyPath, licenseAccepted) => invoke("downloads:start", itemId, comfyPath, licenseAccepted),
-  cancelDownload: (itemId) => invoke("downloads:cancel", itemId),
+  getResourceLinks: () => invoke("resources:list"),
   testBackend: (kind) => invoke("backend:test", kind),
   listTasks: () => invoke("tasks:list"),
   submitGeneration: (request) => invoke("tasks:submit", request),
   cancelTask: (taskId) => invoke("tasks:cancel", taskId),
   showItem: (filePath) => invoke("shell:showItem", filePath),
   openExternal: (url) => invoke("shell:openExternal", url),
-  onDownloadUpdate: (listener) => subscribe("download:update", listener),
   onTaskUpdate: (listener) => subscribe("task:update", listener)
 };
 

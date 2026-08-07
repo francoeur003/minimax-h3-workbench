@@ -15,7 +15,6 @@ export type TaskStatus =
 
 export interface AppSettings {
   localComfyUrl: string;
-  comfyPath: string;
   outputDirectory: string;
   defaultBackend: BackendKind;
   minimaxBaseUrl: string;
@@ -57,22 +56,12 @@ export interface EnvironmentReport {
   recommendations: string[];
 }
 
-export interface DownloadItem {
+export interface ResourceLink {
   id: string;
   label: string;
-  package: "base" | "reference" | "workflow";
+  category: "model" | "comfyui" | "workflow" | "docs";
   url: string;
-  relativePath: string;
-  expectedBytes?: number;
-}
-
-export interface DownloadProgress {
-  id: string;
-  status: "idle" | "downloading" | "paused" | "verifying" | "completed" | "failed" | "cancelled";
-  downloadedBytes: number;
-  totalBytes: number;
-  targetPath?: string;
-  message?: string;
+  description: string;
 }
 
 export interface GenerationRequest {
@@ -153,16 +142,12 @@ export interface WorkbenchApi {
   selectDirectory(): Promise<ApiResponse<string | undefined>>;
   selectFile(kind: "image" | "video" | "key"): Promise<ApiResponse<string | undefined>>;
   inspectEnvironment(): Promise<ApiResponse<EnvironmentReport>>;
-  getDownloadManifest(): Promise<ApiResponse<DownloadItem[]>>;
-  listDownloads(): Promise<ApiResponse<DownloadProgress[]>>;
-  startDownload(itemId: string, comfyPath: string, licenseAccepted: boolean): Promise<ApiResponse<DownloadProgress>>;
-  cancelDownload(itemId: string): Promise<ApiResponse<boolean>>;
+  getResourceLinks(): Promise<ApiResponse<ResourceLink[]>>;
   testBackend(kind: BackendKind): Promise<ApiResponse<BackendTestResult>>;
   listTasks(): Promise<ApiResponse<GenerationTask[]>>;
   submitGeneration(request: GenerationRequest): Promise<ApiResponse<GenerationTask[]>>;
   cancelTask(taskId: string): Promise<ApiResponse<GenerationTask>>;
   showItem(filePath: string): Promise<ApiResponse<boolean>>;
   openExternal(url: string): Promise<ApiResponse<boolean>>;
-  onDownloadUpdate(listener: (progress: DownloadProgress) => void): () => void;
   onTaskUpdate(listener: (task: GenerationTask) => void): () => void;
 }

@@ -5,7 +5,7 @@ Renderer (React)
   → Preload IPC interface
     → Electron Main
       → SystemInspector
-      → DownloadManager
+      → ResourceLinks
       → TaskOrchestrator
         → ComfyAdapter
         → SshComfyAdapter
@@ -16,4 +16,4 @@ Renderer (React)
 
 本地和远程 ComfyUI 使用同一个 `ComfyAdapter`。远程适配器只负责先建立本地端口转发，再把本地隧道地址交给 `ComfyAdapter`。
 
-下载模块通过版本化 manifest 将“官方 URL → ComfyUI 目标目录”固化，避免用户手动移动模型。
+资源链接模块只维护 HTTPS 官方入口允许列表。工作台不下载、缓存或写入模型文件。

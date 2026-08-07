@@ -5,7 +5,6 @@ import type { AppSettings } from "../../shared/types";
 
 const defaultSettings = (): AppSettings => ({
   localComfyUrl: "http://127.0.0.1:8188",
-  comfyPath: "",
   outputDirectory: path.join(app.getPath("videos"), "MiniMax-H3"),
   defaultBackend: "local",
   minimaxBaseUrl: "https://api.minimax.io",
