@@ -14,7 +14,7 @@ import {
 } from "electron";
 import { AdapterRegistry } from "./backends/adapterRegistry";
 import { RESOURCE_LINKS } from "../shared/resourceLinks";
-import type { ApiResponse, AppSettings, BackendKind, GenerationRequest } from "../shared/types";
+import type { ApiResponse, AppSettings, BackendKind, GenerationRequest, SecretName } from "../shared/types";
 import { GenerationOrchestrator } from "./modules/generationOrchestrator";
 import { SettingsStore } from "./modules/settingsStore";
 import { inspectEnvironment } from "./modules/systemInspector";
@@ -48,7 +48,27 @@ app.whenReady().then(async () => {
 
   const screenshotPath = process.env.H3_SCREENSHOT_PATH;
   if (screenshotPath) {
-    await new Promise((resolve) => setTimeout(resolve, 1800));
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    const screenshotPage = process.env.H3_SCREENSHOT_PAGE;
+    if (screenshotPage) {
+      await mainWindow.webContents.executeJavaScript(
+        `document.querySelector('[data-page="${screenshotPage.replace(/[^a-z-]/g, "")}"]')?.click()`
+      );
+    }
+    if (process.env.H3_SCREENSHOT_ACTION === "detect") {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await mainWindow.webContents.executeJavaScript(
+        `document.querySelector('.hero .primary')?.click()`
+      );
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+        const detectionFinished = await mainWindow.webContents.executeJavaScript(
+          `Boolean(document.querySelector('.runtime-estimate'))`
+        );
+        if (detectionFinished) break;
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, process.env.H3_SCREENSHOT_ACTION === "detect" ? 1_500 : 1800));
     await writeFile(screenshotPath, (await mainWindow.webContents.capturePage()).toPNG());
     app.quit();
   }
@@ -107,12 +127,12 @@ function registerIpc(
     registry.invalidate(next);
     return next;
   });
-  handle("secret:set", async (_event, name: "minimaxApiKey" | "sshPassword", value: string) => {
+  handle("secret:set", async (_event, name: SecretName, value: string) => {
     await settingsStore.setSecret(name, value);
     registry.invalidate();
     return true;
   });
-  handle("secret:has", (_event, name: "minimaxApiKey" | "sshPassword") => settingsStore.hasSecret(name));
+  handle("secret:has", (_event, name: SecretName) => settingsStore.hasSecret(name));
   handle("dialog:directory", async () => {
     const result = await dialog.showOpenDialog(mainWindow!, { properties: ["openDirectory", "createDirectory"] });
     return result.canceled ? undefined : result.filePaths[0];

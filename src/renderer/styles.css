@@ -158,6 +158,19 @@ button { cursor: pointer; }
 .verdict h2 { font-size: 20px; margin: 4px 0 10px; }
 .verdict ul { margin: 0; padding-left: 18px; color: #6e7782; font-size: 12px; line-height: 1.7; }
 
+.runtime-estimate { margin-top: 16px; padding: 22px; background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+.runtime-estimate.is-force-run { border-color: #ffb6a3; background: linear-gradient(135deg, #fff 0%, #fff8f5 100%); }
+.runtime-estimate header { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.runtime-estimate header span { color: var(--pink); font-size: 9px; font-weight: 850; letter-spacing: 0.08em; }
+.runtime-estimate h2 { margin: 5px 0 0; font-size: 18px; }
+.runtime-estimate > p { margin: 10px 0 15px; color: var(--muted); font-size: 10px; line-height: 1.7; }
+.runtime-estimate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.runtime-estimate-grid article { padding: 15px; border: 1px solid #ffe0d6; border-radius: 13px; background: rgba(255, 255, 255, 0.8); }
+.runtime-estimate-grid span, .runtime-estimate-grid strong, .runtime-estimate-grid small { display: block; }
+.runtime-estimate-grid span { color: var(--muted); font-size: 9px; }
+.runtime-estimate-grid strong { margin-top: 5px; color: var(--ink); font-size: 19px; }
+.runtime-estimate-grid small { margin-top: 7px; color: #7c858f; font-size: 9px; line-height: 1.55; }
+
 .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin-top: 16px; }
 .quick-actions button { display: grid; grid-template-columns: 44px 1fr; text-align: left; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: 0 10px 34px rgba(24, 30, 37, 0.04); transition: 0.18s ease; }
 .quick-actions button:hover { transform: translateY(-2px); border-color: #ffc1ad; box-shadow: 0 14px 36px rgba(255, 74, 82, 0.09); }
@@ -225,6 +238,9 @@ button { cursor: pointer; }
 .download-progress i { height: 100%; background: var(--brand-gradient); display: block; }
 .download-progress em { position: absolute; right: 0; top: -17px; font-size: 9px; color: var(--muted); font-style: normal; }
 .footnote { color: var(--muted); font-size: 10px; margin-top: 18px; }
+.resource-subheading { margin: 28px 0 12px; }
+.resource-subheading span { color: var(--pink); font-size: 8px; font-weight: 850; letter-spacing: 0.12em; }
+.resource-subheading h2 { margin: 5px 0 0; font-size: 18px; }
 
 .guide-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
 .guide-grid article { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 23px; min-height: 190px; box-shadow: 0 10px 34px rgba(24, 30, 37, 0.035); }

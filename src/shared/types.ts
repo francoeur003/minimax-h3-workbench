@@ -1,4 +1,5 @@
-export type BackendKind = "local" | "ssh" | "minimax";
+export type BackendKind = "local" | "ssh" | "minimax" | "seedance";
+export type SecretName = "minimaxApiKey" | "seedanceUsername" | "seedancePassword" | "sshPassword";
 export type GenerationMode = "text" | "image" | "video";
 export type TaskStatus =
   | "draft"
@@ -18,6 +19,7 @@ export interface AppSettings {
   outputDirectory: string;
   defaultBackend: BackendKind;
   minimaxBaseUrl: string;
+  seedanceBaseUrl: string;
   ssh: {
     name: string;
     host: string;
@@ -62,6 +64,9 @@ export interface ResourceLink {
   category: "model" | "comfyui" | "workflow" | "docs";
   url: string;
   description: string;
+  action: "download" | "open";
+  sizeBytes?: number;
+  targetDirectory?: string;
 }
 
 export interface GenerationRequest {
@@ -137,8 +142,8 @@ export interface ApiResponse<T> {
 export interface WorkbenchApi {
   getSettings(): Promise<ApiResponse<AppSettings>>;
   updateSettings(patch: Partial<AppSettings>): Promise<ApiResponse<AppSettings>>;
-  setSecret(name: "minimaxApiKey" | "sshPassword", value: string): Promise<ApiResponse<boolean>>;
-  hasSecret(name: "minimaxApiKey" | "sshPassword"): Promise<ApiResponse<boolean>>;
+  setSecret(name: SecretName, value: string): Promise<ApiResponse<boolean>>;
+  hasSecret(name: SecretName): Promise<ApiResponse<boolean>>;
   selectDirectory(): Promise<ApiResponse<string | undefined>>;
   selectFile(kind: "image" | "video" | "key"): Promise<ApiResponse<string | undefined>>;
   inspectEnvironment(): Promise<ApiResponse<EnvironmentReport>>;

@@ -1,13 +1,14 @@
 import { app, safeStorage } from "electron";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { AppSettings } from "../../shared/types";
+import type { AppSettings, SecretName } from "../../shared/types";
 
 const defaultSettings = (): AppSettings => ({
   localComfyUrl: "http://127.0.0.1:8188",
   outputDirectory: path.join(app.getPath("videos"), "MiniMax-H3"),
-  defaultBackend: "local",
+  defaultBackend: "seedance",
   minimaxBaseUrl: "https://api.minimax.io",
+  seedanceBaseUrl: "https://aiopenapi.kuaizi.cn",
   ssh: {
     name: "远程显卡",
     host: "",
@@ -46,21 +47,21 @@ export class SettingsStore {
     return next;
   }
 
-  async setSecret(name: "minimaxApiKey" | "sshPassword", value: string): Promise<void> {
+  async setSecret(name: SecretName, value: string): Promise<void> {
     if (!safeStorage.isEncryptionAvailable()) throw new Error("系统安全存储不可用，拒绝保存明文密钥。 ");
     const secrets = await this.readSecrets();
     secrets[name] = safeStorage.encryptString(value).toString("base64");
     await this.atomicWrite(this.secretPath, secrets);
   }
 
-  async getSecret(name: "minimaxApiKey" | "sshPassword"): Promise<string> {
+  async getSecret(name: SecretName): Promise<string> {
     const secrets = await this.readSecrets();
     const encrypted = secrets[name];
     if (!encrypted) return "";
     return safeStorage.decryptString(Buffer.from(encrypted, "base64"));
   }
 
-  async hasSecret(name: "minimaxApiKey" | "sshPassword"): Promise<boolean> {
+  async hasSecret(name: SecretName): Promise<boolean> {
     const secrets = await this.readSecrets();
     return Boolean(secrets[name]);
   }

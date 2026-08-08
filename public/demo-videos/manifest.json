@@ -1,0 +1,35 @@
+{
+  "provider": "Seedance 2.0 via Kuaizi OpenAPI",
+  "model": "doubao-seedance-2-0-260128",
+  "createdAt": "2026-08-07T23:19:45+08:00",
+  "prompt": "Create a cinematic 4-second product-style video of a translucent glass sphere floating above a reflective black surface, glowing with a magenta-to-orange gradient and violet-blue rim light. The sphere slowly rotates while fine particles orbit it, then emits one soft pulse of light. Minimal futuristic studio, premium AI technology aesthetic, smooth dolly-in, crisp details, no text, no logos, no people, native ambient stereo sound.",
+  "settings": {
+    "duration": 4,
+    "resolution": "480p",
+    "ratio": "16:9",
+    "generateAudio": true
+  },
+  "totalDeductedPoints": 748,
+  "outputs": [
+    {
+      "index": 1,
+      "taskId": "kz-cgt-190563343340142635ebd78e6eb44d42d49f155e11fe193742",
+      "file": "seedance-demo-01.mp4"
+    },
+    {
+      "index": 2,
+      "taskId": "kz-cgt-190563344967532587827640affaa943bfaad158944d900040",
+      "file": "seedance-demo-02.mp4"
+    },
+    {
+      "index": 3,
+      "taskId": "kz-cgt-190563345202413611b96d7cc935b6497bbcbf796b995bc184",
+      "file": "seedance-demo-03.mp4"
+    },
+    {
+      "index": 4,
+      "taskId": "kz-cgt-1905633440112312756d3552689d37488e8d5603c1971e44b1",
+      "file": "seedance-demo-04.mp4"
+    }
+  ]
+}
