@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { ApiResponse, AppSettings, BackendKind, BackendTestResult, EnvironmentReport, GenerationMode, GenerationRequest, GenerationTask, ResourceLink } from "../shared/types";
+import type { ApiResponse, AppSettings, BackendKind, BackendTestResult, EnvironmentReport, GenerationMode, GenerationRequest, GenerationTask, ResourceLink, UpdateInfo } from "../shared/types";
 import { estimateCloudCost, estimateLocalRuntime } from "../shared/capabilities";
 
 type Page = "ready" | "studio" | "downloads" | "guide" | "connections";
@@ -19,12 +19,19 @@ export function App() {
   const [tasks, setTasks] = useState<GenerationTask[]>([]);
   const [notice, setNotice] = useState<{ text: string; error?: boolean }>();
   const [detecting, setDetecting] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo>();
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
   const showError = (error: unknown) => setNotice({ text: error instanceof Error ? error.message : String(error || "操作失败"), error: true });
 
   useEffect(() => {
     Promise.all([window.h3.getSettings(), window.h3.getResourceLinks(), window.h3.listTasks()])
       .then(([s, r, t]) => { if (s.data) setSettings(s.data); if (r.data) setResources(r.data); if (t.data) setTasks(t.data); }).catch(showError);
     const offTask = window.h3.onTaskUpdate((item) => setTasks((all) => upsert(all, item)));
+    window.h3.checkForUpdates().then((response) => {
+      if (!response.data) return;
+      setUpdateInfo(response.data);
+      if (response.data.updateAvailable) setNotice({ text: `发现新版本 v${response.data.latestVersion}，点击左下角“下载更新”即可安装。` });
+    }).catch(() => undefined);
     return () => { offTask(); };
   }, []);
 
@@ -41,11 +48,28 @@ export function App() {
       setNotice({ text: `检测完成：${response.data.verdict}` });
     } else showError(response.message);
   }
+  async function update() {
+    if (updateInfo?.updateAvailable) {
+      const opened = await window.h3.openExternal(updateInfo.releaseUrl);
+      if (!opened.ok) showError(opened.message);
+      return;
+    }
+    setCheckingUpdate(true);
+    const response = await window.h3.checkForUpdates();
+    setCheckingUpdate(false);
+    if (!response.data) { showError(response.message); return; }
+    setUpdateInfo(response.data);
+    if (response.data.updateAvailable) {
+      setNotice({ text: `发现新版本 v${response.data.latestVersion}，再次点击左下角即可下载。` });
+    } else setNotice({ text: `当前已是最新版 v${response.data.currentVersion}` });
+  }
   if (!settings) return <div className="splash"><div className="brand-mark">H3</div><p>正在启动工作台…</p></div>;
   return <div className="app-shell">
     <aside className="sidebar"><div className="brand"><div className="brand-mark">H3</div><div><strong>MiniMax H3</strong><span>视频生成工作台</span></div></div>
       <nav>{pages.map((item) => <button key={item.id} data-page={item.id} className={page === item.id ? "active" : ""} onClick={() => setPage(item.id)}><i>{item.eyebrow}</i><span>{item.label}</span></button>)}</nav>
-      <div className="sidebar-foot"><span className="status-dot" /> 轻量版 0.1.3</div></aside>
+      <button className={`sidebar-update ${updateInfo?.updateAvailable ? "available" : ""}`} onClick={update} disabled={checkingUpdate}>
+        <span className="status-dot" /><span><strong>{updateInfo?.updateAvailable ? "下载更新" : checkingUpdate ? "正在检查…" : "检查更新"}</strong><small>{updateInfo?.updateAvailable ? `v${updateInfo.latestVersion} 已发布` : `轻量版 v${updateInfo?.currentVersion || "0.1.4"}`}</small></span>
+      </button></aside>
     <main className="main-area">
       {page === "ready" && <ReadyPage report={report} busy={detecting} onDetect={detect} onNavigate={setPage} />}
       {page === "studio" && <StudioPage settings={settings} tasks={tasks} onError={showError} onNotice={(text) => setNotice({ text })} />}
@@ -63,7 +87,7 @@ function ReadyPage({ report, busy, onDetect, onNavigate }: { report?: Environmen
     { name: "显卡", value: report?.gpus.map((g) => g.model).join(" / ") || "等待检测", sub: report?.gpus.map((g) => gb(g.vramBytes)).join(" / ") || "GPU 与显存" },
     { name: "内存", value: gb(report?.memoryTotalBytes), sub: report ? `可用 ${gb(report.memoryAvailableBytes)}` : "系统 RAM" },
     { name: "磁盘", value: gb(report?.diskFreeBytes), sub: "模型与输出可用空间" },
-    { name: "ComfyUI", value: report?.comfyReachable ? `已连接 ${report.comfyVersion || ""}` : report ? "未连接" : "等待检测", sub: report?.comfyHasH3Nodes ? "H3 节点已就绪" : "检测版本与节点" }
+    { name: "ComfyUI", value: report?.comfyReachable ? `已连接 ${report.comfyVersion || ""}` : report ? "未连接" : "等待检测", sub: report?.comfyHasH3Nodes ? (report.comfyHasH3Models ? "H3 节点与 5 个模型均已就绪" : `H3 节点正常，缺少 ${report.comfyMissingH3Models.length} 个模型`) : "检测版本、节点与模型" }
   ];
   const runtimeEstimates = report ? estimateLocalRuntime(report) : [];
   return <section className="page ready-page"><header className="hero"><span className="eyebrow">SYSTEM READINESS</span><h1>先判断怎么跑，<br/><em>再开始生成。</em></h1><p>一次检查本机硬件、存储、FFmpeg 和 ComfyUI，给出本地、SSH 或云 API 的明确建议。</p><button className="primary large" onClick={onDetect} disabled={busy}>{busy ? "正在检测…" : "开始配置检测"}</button></header>
@@ -117,8 +141,8 @@ function ResourcesPage({ resources }: { resources: ResourceLink[] }) {
 
 function GuidePage() { const guides = [
   ["准备 ComfyUI", <>安装或更新到包含 MiniMax H3 原生节点的版本，启动时加入 <code>--listen 127.0.0.1 --port 8188</code>。不要把端口直接暴露到公网。</>],
-  ["安装模型", <>在“模型下载”页选择 ComfyUI 根目录。基础模型用于文生/图生，Reference 模型用于视频参考，工作流放入 <code>user/default/workflows</code>。</>],
-  ["本机连接", <>默认地址为 <code>http://127.0.0.1:8188</code>。先启动 ComfyUI，再测试连接；工作台会检查 H3 节点。</>],
+  ["安装模型", <>在“模型下载”页下载五个官方文件，并按每项标注手动放入 <code>models/diffusion_models</code>、<code>models/text_encoders</code> 或 <code>models/vae</code>，然后完全重启 ComfyUI。</>],
+  ["本机连接", <>默认地址为 <code>http://127.0.0.1:8188</code>。先启动 ComfyUI，再测试连接；工作台会同时检查 H3 节点和五个模型文件。</>],
   ["租用显卡 / SSH", <>远端 ComfyUI 监听回环地址。填写主机、账号和私钥；确认并记录 SHA-256 主机指纹。</>],
   ["MiniMax 云 API", <>从 MiniMax 开放平台创建 API Key。密钥只保存在操作系统安全存储中；提交前会显示费用估算。</>],
   ["Seedance 2.0 API", <>在“连接设置”中填写本地已配置的 Seedance 账号；凭据会加密保存在系统安全存储中。工作台按同一提示词并发提交 4 个独立任务。</>],

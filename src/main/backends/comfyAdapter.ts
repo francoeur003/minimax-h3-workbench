@@ -8,12 +8,15 @@ import type {
   GenerationTask,
   TaskStatus
 } from "../../shared/types";
+import { inspectH3Readiness } from "./comfyReadiness";
 import { buildFl2vaWorkflow, buildRef2vaWorkflow, type ComfyPrompt, type UploadedMedia } from "./workflows";
 
 interface ComfyAdapterOptions {
   baseUrl: string;
   outputDirectory: string;
 }
+
+type JsonObject = Record<string, unknown>;
 
 export class ComfyAdapter implements GenerationAdapter {
   private readonly baseUrl: string;
@@ -31,14 +34,24 @@ export class ComfyAdapter implements GenerationAdapter {
       ]);
       if (!statsResponse.ok || !nodesResponse.ok) throw new Error(`ComfyUI 返回 ${statsResponse.status}/${nodesResponse.status}`);
       const stats = (await statsResponse.json()) as Record<string, unknown>;
-      const nodes = (await nodesResponse.json()) as Record<string, unknown>;
-      const hasH3 = "MiniMaxH3ImageToVideo" in nodes && "MiniMaxH3ReferenceToVideo" in nodes;
+      const nodes = (await nodesResponse.json()) as JsonObject;
+      const { hasH3Nodes: hasH3, missingModels: missing } = inspectH3Readiness(nodes);
+      const ok = hasH3 && missing.length === 0;
       return {
-        ok: hasH3,
+        ok,
         label: "ComfyUI",
         latencyMs: Date.now() - start,
-        details: { stats, hasH3 },
-        message: hasH3 ? "ComfyUI 已连接，H3 原生节点可用。" : "ComfyUI 已连接，但缺少 H3 原生节点，请更新到 0.30.0+。"
+        details: {
+          stats,
+          hasH3,
+          missingModels: missing.map((item) => item.name),
+          missingModelPaths: missing.map((item) => `${item.directory}${item.name}`)
+        },
+        message: !hasH3
+          ? "ComfyUI 已连接，但缺少 H3 原生节点，请更新到 0.30.0+。"
+          : missing.length > 0
+            ? `ComfyUI 已连接，但缺少 ${missing.length} 个 H3 模型文件。请进入“模型下载”按标注目录安装。`
+            : "ComfyUI 已连接，H3 节点与 5 个模型文件均已就绪。"
       };
     } catch (error) {
       return {
@@ -57,6 +70,7 @@ export class ComfyAdapter implements GenerationAdapter {
     onProgress: (status: TaskStatus, progress: number, message?: string) => void,
     signal?: AbortSignal
   ): Promise<Pick<GenerationTask, "providerTaskId" | "outputPath" | "outputUrl" | "usage">> {
+    await this.assertModelsReady(request.mode, signal);
     onProgress("uploading", 5, "正在准备参考素材");
     const workflow = await this.prepareWorkflow(request, task.seed, signal);
     onProgress("queued", 10, "正在提交 ComfyUI 队列");
@@ -80,6 +94,21 @@ export class ComfyAdapter implements GenerationAdapter {
 
   async cancel(_providerTaskId?: string): Promise<void> {
     await fetch(`${this.baseUrl}/interrupt`, { method: "POST" });
+  }
+
+  private async assertModelsReady(mode: GenerationRequest["mode"], signal?: AbortSignal): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/object_info`, { signal: signal ?? AbortSignal.timeout(12_000) });
+    if (!response.ok) throw new Error(`无法读取 ComfyUI 模型清单：HTTP ${response.status}`);
+    const nodes = (await response.json()) as JsonObject;
+    const readiness = inspectH3Readiness(nodes);
+    if (!readiness.hasH3Nodes) throw new Error("当前 ComfyUI 缺少 MiniMax H3 原生节点，请更新到 0.30.0+ 后完全重启。 ");
+    const requiredKeys = mode === "video"
+      ? new Set(["ref2va", "clip", "videoVae", "audioVae"])
+      : new Set(["fl2va", "clip", "videoVae", "audioVae"]);
+    const missing = readiness.missingModels.filter((item) => requiredKeys.has(item.key));
+    if (missing.length === 0) return;
+    const list = missing.map((item) => `${item.name} → ${item.directory}`).join("；");
+    throw new Error(`缺少本次生成所需的 H3 模型：${list}。安装后请完全重启 ComfyUI。`);
   }
 
   private async prepareWorkflow(request: GenerationRequest, seed: number, signal?: AbortSignal): Promise<ComfyPrompt> {

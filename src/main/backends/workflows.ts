@@ -8,13 +8,13 @@ export interface UploadedMedia {
   type?: string;
 }
 
-const models = {
+export const H3_MODELS = {
   fl2va: "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
   ref2va: "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
   clip: "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
   videoVae: "minimax_h3_video_vae_fp16.safetensors",
   audioVae: "minimax_h3_audio_vae_fp32.safetensors"
-};
+} as const;
 
 export function frameLength(duration: number): number {
   const raw = Math.max(5, Math.round(duration * 24));
@@ -71,10 +71,10 @@ export function buildFl2vaWorkflow(
   media: { first?: UploadedMedia; last?: UploadedMedia; sourceImage?: UploadedMedia }
 ): ComfyPrompt {
   const prompt: ComfyPrompt = {
-    model: { class_type: "UNETLoader", inputs: { unet_name: models.fl2va, weight_dtype: "default" } },
-    clip: { class_type: "CLIPLoader", inputs: { clip_name: models.clip, type: "minimax", device: "default" } },
-    videoVae: { class_type: "VAELoader", inputs: { vae_name: models.videoVae } },
-    audioVae: { class_type: "VAELoader", inputs: { vae_name: models.audioVae } }
+    model: { class_type: "UNETLoader", inputs: { unet_name: H3_MODELS.fl2va, weight_dtype: "default" } },
+    clip: { class_type: "CLIPLoader", inputs: { clip_name: H3_MODELS.clip, type: "minimax", device: "default" } },
+    videoVae: { class_type: "VAELoader", inputs: { vae_name: H3_MODELS.videoVae } },
+    audioVae: { class_type: "VAELoader", inputs: { vae_name: H3_MODELS.audioVae } }
   };
 
   const first = media.sourceImage ?? media.first;
@@ -100,10 +100,10 @@ export function buildRef2vaWorkflow(request: GenerationRequest, seed: number, me
     ? request.prompt
     : `Use <Video 1> as the motion and camera reference. ${request.prompt}`;
   const prompt: ComfyPrompt = {
-    model: { class_type: "UNETLoader", inputs: { unet_name: models.ref2va, weight_dtype: "default" } },
-    clip: { class_type: "CLIPLoader", inputs: { clip_name: models.clip, type: "minimax", device: "default" } },
-    videoVae: { class_type: "VAELoader", inputs: { vae_name: models.videoVae } },
-    audioVae: { class_type: "VAELoader", inputs: { vae_name: models.audioVae } },
+    model: { class_type: "UNETLoader", inputs: { unet_name: H3_MODELS.ref2va, weight_dtype: "default" } },
+    clip: { class_type: "CLIPLoader", inputs: { clip_name: H3_MODELS.clip, type: "minimax", device: "default" } },
+    videoVae: { class_type: "VAELoader", inputs: { vae_name: H3_MODELS.videoVae } },
+    audioVae: { class_type: "VAELoader", inputs: { vae_name: H3_MODELS.audioVae } },
     loadVideo: { class_type: "LoadVideo", inputs: { file: mediaName(media.sourceVideo) } },
     videoParts: { class_type: "GetVideoComponents", inputs: { video: ["loadVideo", 0] } },
     conditioning: {

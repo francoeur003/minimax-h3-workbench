@@ -52,6 +52,8 @@ export interface EnvironmentReport {
   comfyReachable: boolean;
   comfyVersion?: string;
   comfyHasH3Nodes: boolean;
+  comfyHasH3Models: boolean;
+  comfyMissingH3Models: string[];
   ffmpegAvailable: boolean;
   grade: "A" | "B" | "C" | "D";
   verdict: string;
@@ -139,6 +141,15 @@ export interface ApiResponse<T> {
   retryable?: boolean;
 }
 
+export interface UpdateInfo {
+  currentVersion: string;
+  latestVersion: string;
+  updateAvailable: boolean;
+  releaseName: string;
+  releaseUrl: string;
+  publishedAt?: string;
+}
+
 export interface WorkbenchApi {
   getSettings(): Promise<ApiResponse<AppSettings>>;
   updateSettings(patch: Partial<AppSettings>): Promise<ApiResponse<AppSettings>>;
@@ -147,6 +158,7 @@ export interface WorkbenchApi {
   selectDirectory(): Promise<ApiResponse<string | undefined>>;
   selectFile(kind: "image" | "video" | "key"): Promise<ApiResponse<string | undefined>>;
   inspectEnvironment(): Promise<ApiResponse<EnvironmentReport>>;
+  checkForUpdates(): Promise<ApiResponse<UpdateInfo>>;
   getResourceLinks(): Promise<ApiResponse<ResourceLink[]>>;
   testBackend(kind: BackendKind): Promise<ApiResponse<BackendTestResult>>;
   listTasks(): Promise<ApiResponse<GenerationTask[]>>;

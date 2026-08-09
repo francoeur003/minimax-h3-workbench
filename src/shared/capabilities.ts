@@ -6,6 +6,7 @@ export interface CapabilityInput {
   diskFreeBytes: number;
   comfyReachable: boolean;
   comfyHasH3Nodes: boolean;
+  comfyMissingH3Models?: string[];
 }
 
 export interface LocalRuntimeEstimate {
@@ -29,6 +30,7 @@ export function classifyEnvironment(input: CapabilityInput): Pick<EnvironmentRep
   if (nvidia.length >= 2 && totalVram >= 48 * GiB && input.memoryTotalBytes >= 256 * GiB) {
     if (!input.comfyReachable) recommendations.push("安装或启动 ComfyUI 0.30.0+，然后重新检测。 ");
     if (input.comfyReachable && !input.comfyHasH3Nodes) recommendations.push("更新 ComfyUI，当前实例缺少 MiniMax H3 原生节点。 ");
+    if (input.comfyHasH3Nodes && input.comfyMissingH3Models?.length) recommendations.push(`安装缺少的 ${input.comfyMissingH3Models.length} 个 H3 模型文件，然后完全重启 ComfyUI。`);
     return {
       grade: "B",
       verdict: "硬件接近官方验证的本地配置，完成模型安装后可运行预检。",
@@ -39,6 +41,7 @@ export function classifyEnvironment(input: CapabilityInput): Pick<EnvironmentRep
   if (nvidia.length >= 1 && totalVram >= 12 * GiB && input.memoryTotalBytes >= 32 * GiB && input.diskFreeBytes >= 45 * GiB) {
     if (!input.comfyReachable) recommendations.push("安装或启动 ComfyUI 0.30.0+，然后重新检测。 ");
     if (input.comfyReachable && !input.comfyHasH3Nodes) recommendations.push("更新 ComfyUI，当前实例缺少 MiniMax H3 原生节点。 ");
+    if (input.comfyHasH3Nodes && input.comfyMissingH3Models?.length) recommendations.push(`安装缺少的 ${input.comfyMissingH3Models.length} 个 H3 模型文件，然后完全重启 ComfyUI。`);
     recommendations.push("该配置属于 ComfyUI 量化实验路径，必须通过 5 秒预检后才标记为可用。 ");
     return {
       grade: "C",

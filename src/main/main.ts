@@ -19,6 +19,7 @@ import { GenerationOrchestrator } from "./modules/generationOrchestrator";
 import { SettingsStore } from "./modules/settingsStore";
 import { inspectEnvironment } from "./modules/systemInspector";
 import { TaskStore } from "./modules/taskStore";
+import { checkForUpdates } from "./modules/updateChecker";
 
 protocol.registerSchemesAsPrivileged([
   { scheme: "h3media", privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }
@@ -147,6 +148,7 @@ function registerIpc(
     return result.canceled ? undefined : result.filePaths[0];
   });
   handle("environment:inspect", async () => inspectEnvironment((await settingsStore.get()).localComfyUrl));
+  handle("update:check", () => checkForUpdates(app.getVersion()));
   handle("resources:list", () => RESOURCE_LINKS);
   handle("backend:test", async (_event, kind: BackendKind) => (await registry.get(kind)).test());
   handle("tasks:list", () => orchestrator.list());

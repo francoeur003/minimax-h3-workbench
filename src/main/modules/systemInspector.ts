@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import si from "systeminformation";
 import { classifyEnvironment } from "../../shared/capabilities";
 import type { EnvironmentReport, GpuInfo } from "../../shared/types";
+import { inspectH3Readiness } from "../backends/comfyReadiness";
 
 const execFileAsync = promisify(execFile);
 
@@ -29,7 +30,8 @@ export async function inspectEnvironment(comfyUrl: string): Promise<EnvironmentR
     memoryTotalBytes: memory.total,
     diskFreeBytes,
     comfyReachable: comfy.reachable,
-    comfyHasH3Nodes: comfy.hasH3Nodes
+    comfyHasH3Nodes: comfy.hasH3Nodes,
+    comfyMissingH3Models: comfy.missingModels
   });
 
   return {
@@ -45,27 +47,31 @@ export async function inspectEnvironment(comfyUrl: string): Promise<EnvironmentR
     comfyReachable: comfy.reachable,
     comfyVersion: comfy.version,
     comfyHasH3Nodes: comfy.hasH3Nodes,
+    comfyHasH3Models: comfy.hasH3Nodes && comfy.missingModels.length === 0,
+    comfyMissingH3Models: comfy.missingModels,
     ffmpegAvailable,
     ...capability
   };
 }
 
-async function inspectComfy(baseUrl: string): Promise<{ reachable: boolean; version?: string; hasH3Nodes: boolean }> {
+async function inspectComfy(baseUrl: string): Promise<{ reachable: boolean; version?: string; hasH3Nodes: boolean; missingModels: string[] }> {
   try {
     const [statsResponse, nodeResponse] = await Promise.all([
       fetch(`${baseUrl.replace(/\/$/, "")}/system_stats`, { signal: AbortSignal.timeout(4_000) }),
       fetch(`${baseUrl.replace(/\/$/, "")}/object_info`, { signal: AbortSignal.timeout(8_000) })
     ]);
-    if (!statsResponse.ok || !nodeResponse.ok) return { reachable: false, hasH3Nodes: false };
+    if (!statsResponse.ok || !nodeResponse.ok) return { reachable: false, hasH3Nodes: false, missingModels: [] };
     const stats = (await statsResponse.json()) as { system?: { comfyui_version?: string } };
     const nodes = (await nodeResponse.json()) as Record<string, unknown>;
+    const readiness = inspectH3Readiness(nodes);
     return {
       reachable: true,
       version: stats.system?.comfyui_version,
-      hasH3Nodes: "MiniMaxH3ImageToVideo" in nodes && "MiniMaxH3ReferenceToVideo" in nodes
+      hasH3Nodes: readiness.hasH3Nodes,
+      missingModels: readiness.missingModels.map((item) => item.name)
     };
   } catch {
-    return { reachable: false, hasH3Nodes: false };
+    return { reachable: false, hasH3Nodes: false, missingModels: [] };
   }
 }
 
