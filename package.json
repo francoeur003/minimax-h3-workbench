@@ -1,13 +1,14 @@
 {
   "name": "minimax-h3-workbench",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "MiniMax H3 一站式配置、下载与视频生成工作台",
   "main": "dist-electron/main/main.js",
   "license": "MIT",
   "author": "Potatoes into fries",
   "scripts": {
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"tsc -p tsconfig.main.json --watch\" \"wait-on http://127.0.0.1:5173 dist-electron/main/main.js && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .\"",
-    "build": "npm run typecheck && vite build && tsc -p tsconfig.main.json",
+    "clean": "node -e \"const fs=require('node:fs'); for (const target of ['dist','dist-electron']) fs.rmSync(target,{recursive:true,force:true})\"",
+    "build": "npm run clean && npm run typecheck && vite build && tsc -p tsconfig.main.json",
     "typecheck": "tsc -p tsconfig.renderer.json --noEmit && tsc -p tsconfig.main.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

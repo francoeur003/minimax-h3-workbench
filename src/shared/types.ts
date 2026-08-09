@@ -1,5 +1,5 @@
-export type BackendKind = "local" | "ssh" | "minimax" | "seedance";
-export type SecretName = "minimaxApiKey" | "seedanceUsername" | "seedancePassword" | "sshPassword";
+export type BackendKind = "local" | "ssh" | "minimax";
+export type SecretName = "minimaxApiKey" | "sshPassword";
 export type GenerationMode = "text" | "image" | "video";
 export type TaskStatus =
   | "draft"
@@ -19,7 +19,6 @@ export interface AppSettings {
   outputDirectory: string;
   defaultBackend: BackendKind;
   minimaxBaseUrl: string;
-  seedanceBaseUrl: string;
   ssh: {
     name: string;
     host: string;

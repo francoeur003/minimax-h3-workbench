@@ -2,12 +2,10 @@ import type { AppSettings, BackendKind, GenerationAdapter } from "../../shared/t
 import { SettingsStore } from "../modules/settingsStore";
 import { ComfyAdapter } from "./comfyAdapter";
 import { MiniMaxAdapter } from "./minimaxAdapter";
-import { SeedanceAdapter } from "./seedanceAdapter";
 import { SshComfyAdapter } from "./sshComfyAdapter";
 
 export class AdapterRegistry {
   private sshAdapter?: SshComfyAdapter;
-  private seedanceAdapter?: SeedanceAdapter;
 
   constructor(private readonly settingsStore: SettingsStore) {}
 
@@ -23,17 +21,6 @@ export class AdapterRegistry {
         outputDirectory: settings.outputDirectory
       });
     }
-    if (kind === "seedance") {
-      if (!this.seedanceAdapter) {
-        this.seedanceAdapter = new SeedanceAdapter({
-          baseUrl: settings.seedanceBaseUrl,
-          username: await this.settingsStore.getSecret("seedanceUsername"),
-          password: await this.settingsStore.getSecret("seedancePassword"),
-          outputDirectory: settings.outputDirectory
-        });
-      }
-      return this.seedanceAdapter;
-    }
     if (!this.sshAdapter) {
       this.sshAdapter = new SshComfyAdapter(settings, await this.settingsStore.getSecret("sshPassword"));
     }
@@ -44,7 +31,6 @@ export class AdapterRegistry {
     void settings;
     this.sshAdapter?.close();
     this.sshAdapter = undefined;
-    this.seedanceAdapter = undefined;
   }
 
   close(): void {

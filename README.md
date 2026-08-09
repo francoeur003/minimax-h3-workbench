@@ -29,7 +29,7 @@
 
 | 01 · 判断本机能不能跑 | 02 · 下载官方模型 | 03 · 选择生成路径 |
 | --- | --- | --- |
-| 检测 GPU、显存、内存、磁盘、FFmpeg、ComfyUI、H3 节点与五个模型 | 五个必需模型一键直达官方文件，并标注体积与存放目录 | 本机 ComfyUI、SSH 远程显卡、MiniMax H3 云 API、Seedance 2.0 API |
+| 检测 GPU、显存、内存、磁盘、FFmpeg、ComfyUI、H3 节点与五个模型 | 五个必需模型一键直达官方文件，并标注体积与存放目录 | 本机 ComfyUI、SSH 远程显卡、MiniMax H3 云 API |
 
 ## 产品界面
 
@@ -56,9 +56,9 @@
 - **配置检测**：读取 CPU、内存、GPU/显存、磁盘、FFmpeg、ComfyUI、H3 原生节点与五个模型文件状态。
 - **运行建议**：根据硬件给出本机、SSH 远程显卡或云 API 建议，并预测强行本机运行耗时。
 - **官方模型直达**：提供 MiniMax H3 五个必需模型的官方文件下载入口；工作台不代理、不缓存权重。
-- **四种生成后端**：本机 ComfyUI、SSH ComfyUI、MiniMax H3 云 API、Seedance 2.0 API。
+- **三种生成后端**：本机 ComfyUI、SSH ComfyUI、MiniMax H3 云 API。
 - **四路并行结果**：统一管理四个生成任务的进度、取消、输出和异常恢复。
-- **凭据安全存储**：API Key、Seedance 账号密码和 SSH 密码使用 Electron `safeStorage` 加密。
+- **凭据安全存储**：API Key 和 SSH 密码使用 Electron `safeStorage` 加密。
 - **版本更新提醒**：启动时自动检查 GitHub Release；左下角可手动检查，有新版时一键打开官方下载页。
 
 ## 快速开始
@@ -100,7 +100,6 @@ npm run package:mac
 | 本机 ComfyUI | 已验证的 NVIDIA CUDA 环境 | 默认连接 `http://127.0.0.1:8188` |
 | SSH 远程显卡 | 本机显存不足但有远端 GPU | 通过 SSH 隧道连接远端回环地址，无需暴露 8188 |
 | MiniMax H3 云 API | 希望免维护本地环境 | 使用自己的 API Key，异步生成并自动保存结果 |
-| Seedance 2.0 API | 已有 Kuaizi OpenAPI 账号 | 登录鉴权、轮询任务并支持四路并发 |
 
 具体模型目录、ComfyUI 启动方式和首尾帧用法均已内置在软件“配置指南”页面。
 
@@ -117,7 +116,7 @@ npm run package:mac
 ## 当前验收状态
 
 - TypeScript 类型检查：通过
-- Vitest：18 项通过
+- Vitest：16 项通过
 - Vite 生产构建：通过
 - Electron 真实页面截图验收：通过
 - macOS arm64 DMG/ZIP：构建、签名校验并从打包 App 启动通过

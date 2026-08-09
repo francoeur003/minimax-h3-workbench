@@ -46,7 +46,7 @@ export class GenerationOrchestrator {
     await this.store.save(this.tasks);
     created.forEach(this.listener);
 
-    const concurrency = request.backend === "seedance" ? 4 : request.backend === "minimax" ? 2 : 1;
+    const concurrency = request.backend === "minimax" ? 2 : 1;
     void runPool(created, concurrency, (task) => this.runTask(request, task));
     return created;
   }

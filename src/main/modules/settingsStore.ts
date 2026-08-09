@@ -6,9 +6,8 @@ import type { AppSettings, SecretName } from "../../shared/types";
 const defaultSettings = (): AppSettings => ({
   localComfyUrl: "http://127.0.0.1:8188",
   outputDirectory: path.join(app.getPath("videos"), "MiniMax-H3"),
-  defaultBackend: "seedance",
+  defaultBackend: "local",
   minimaxBaseUrl: "https://api.minimax.io",
-  seedanceBaseUrl: "https://aiopenapi.kuaizi.cn",
   ssh: {
     name: "远程显卡",
     host: "",
@@ -30,7 +29,16 @@ export class SettingsStore {
     try {
       const raw = JSON.parse(await readFile(this.filePath, "utf8")) as Partial<AppSettings>;
       const defaults = defaultSettings();
-      return { ...defaults, ...raw, ssh: { ...defaults.ssh, ...(raw.ssh ?? {}) } };
+      const defaultBackend = raw.defaultBackend === "ssh" || raw.defaultBackend === "minimax" || raw.defaultBackend === "local"
+        ? raw.defaultBackend
+        : "local";
+      return {
+        localComfyUrl: raw.localComfyUrl || defaults.localComfyUrl,
+        outputDirectory: raw.outputDirectory || defaults.outputDirectory,
+        defaultBackend,
+        minimaxBaseUrl: raw.minimaxBaseUrl || defaults.minimaxBaseUrl,
+        ssh: { ...defaults.ssh, ...(raw.ssh ?? {}) }
+      };
     } catch {
       return defaultSettings();
     }
