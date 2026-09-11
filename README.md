@@ -23,7 +23,11 @@
   · <a href="./SECURITY.md">安全说明</a>
 </p>
 
-![MiniMax H3 生成工作台](./docs/images/studio-v0.1.3.jpg)
+[![MiniMax H3 工作台演示视频](./docs/images/minimax-h3-demo.gif)](./docs/videos/minimax-h3-demo.mp4)
+
+<p align="center">
+  <a href="./docs/videos/minimax-h3-demo.mp4">点击查看高清演示视频</a>
+</p>
 
 ## 从检测到生成，一条线跑通
 
