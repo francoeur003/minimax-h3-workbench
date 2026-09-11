@@ -23,9 +23,11 @@
   · <a href="./SECURITY.md">安全说明</a>
 </p>
 
-[![MiniMax H3 工作台演示视频](./docs/images/minimax-h3-demo.gif)](./docs/videos/minimax-h3-demo.mp4)
-
 <p align="center">
+  <a href="./docs/videos/minimax-h3-demo.mp4">
+    <img src="./docs/images/minimax-h3-demo.gif" width="820" alt="MiniMax H3 工作台演示视频">
+  </a>
+  <br>
   <a href="./docs/videos/minimax-h3-demo.mp4">点击查看高清演示视频</a>
 </p>
 
